@@ -1,2 +1,19 @@
 # dis-bundle-scheduler
-This repository holds the code for the data-api bundle scheduler, which is used to automate the publication of datasets included within a bundle.
+
+dis-bundle-scheduler - a scheduler application for automating the publication of datasets linked to bundles.
+
+## Getting started
+
+### Dependencies
+
+### Configuration
+
+## Contributing
+
+See [CONTRIBUTING](CONTRIBUTING.md) for details.
+
+## License
+
+Copyright © 2025, Office for National Statistics (https://www.ons.gov.uk)
+
+Released under MIT license, see [LICENSE](LICENSE.md) for details.
