@@ -1,0 +1,22 @@
+FROM golang:tip-alpine3.22 as build
+
+ENV GOCACHE=/go/.go/cache GOPATH=/go/.go/path TZ=Europe/London
+RUN GOBIN=/bin go install github.com/cespare/reflex@latest
+
+# Map between the working directories of dev and live
+RUN ln -s /go /dis-bundle-scheduler
+WORKDIR /dis-bundle-scheduler
+
+COPY . .
+
+RUN go build -o dis-bundle-scheduler main.go
+
+RUN chmod +x dis-bundle-scheduler
+
+ADD crontab.txt /crontab.txt
+
+COPY entry.sh /entry.sh
+RUN chmod 755 /entry.sh
+RUN /usr/bin/crontab /crontab.txt
+
+CMD ["/entry.sh"]

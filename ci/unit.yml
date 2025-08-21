@@ -1,0 +1,18 @@
+---
+
+platform: linux
+
+image_resource:
+  type: docker-image
+  source:
+    repository: golang
+    tag: 1.24.4-bullseye
+
+inputs:
+  - name: dis-bundle-scheduler
+
+caches:
+  - path: go/
+
+run:
+  path: dis-bundle-scheduler/ci/scripts/unit.sh

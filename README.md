@@ -4,9 +4,18 @@ dis-bundle-scheduler - a scheduler application for automating the publication of
 
 ## Getting started
 
+* Run `make debug`
+
 ### Dependencies
 
+* No further dependencies other than those defined in `go.mod`
+
 ### Configuration
+
+| Environment variable          | Default                               | Description                                                |
+|-------------------------------|---------------------------------------|------------------------------------------------------------|
+| BUNDLES_API_SERVICE_TOKEN     | "bundle-scheduler-test-auth-token"    | The service auth token to connect to dis-bundle-api                               |
+| BUNDLES_API_URL               | "http://localhost:29800"              | The URL for dis-bundle-api                                 |
 
 ## Contributing
 
