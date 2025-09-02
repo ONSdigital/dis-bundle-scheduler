@@ -110,25 +110,22 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 			if err != nil {
 				// Do not fail and return if there is an issue as the process needs to continue
 				log.Error(ctx, "Error unmarshalling bundle info, moving to next item", err, logData)
-			} else {
+			} else if bundleObj.State == "APPROVED" {
 				// Ensure the bundle is in the approved state
-				if bundleObj.State == "APPROVED" {
-					var publishedBundle PublishBundleResult
-					headers.IfMatch = bundle.Headers.Get("Etag")
-					updatedBundle, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, getScheduledBundlesResult.Items[i].ID, models.BundleStatePublished)
-					if err != nil {
-						// Do not fail and return if there is an issue as the process needs to continue
-						log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
-						publishedBundle = PublishBundleResult{BundleID: getScheduledBundlesResult.Items[i].ID, Success: false, Error: nil}
-					} else {
-						publishedBundle = PublishBundleResult{BundleID: updatedBundle.ID, Success: true, Error: nil}
-					}
-					publicationList.Results = append(publicationList.Results, publishedBundle)
+				var publishedBundle PublishBundleResult
+				headers.IfMatch = bundle.Headers.Get("Etag")
+				updatedBundle, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, getScheduledBundlesResult.Items[i].ID, models.BundleStatePublished)
+				if err != nil {
+					// Do not fail and return if there is an issue as the process needs to continue
+					log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
+					publishedBundle = PublishBundleResult{BundleID: getScheduledBundlesResult.Items[i].ID, Success: false, Error: nil}
+				} else {
+					publishedBundle = PublishBundleResult{BundleID: updatedBundle.ID, Success: true, Error: nil}
 				}
+				publicationList.Results = append(publicationList.Results, publishedBundle)
 			}
 		}
 	}
-
 	return &PublishResult{
 		Success: true,
 		Results: publicationList.Results,
