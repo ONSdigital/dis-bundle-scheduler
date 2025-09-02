@@ -17,16 +17,16 @@ import (
 )
 
 var (
-	now         = time.Now().UTC()
-	oneDayLater = now.Add(24 * time.Hour)
-	testBundle  = models.Bundle{
+	now            = time.Now().UTC()
+	oneMinuteLater = now.Add(1 * time.Minute)
+	testBundle     = models.Bundle{
 		ID:            "bundle1",
 		BundleType:    models.BundleTypeScheduled,
 		CreatedBy:     &models.User{Email: "creator@example.com"},
 		CreatedAt:     &now,
 		LastUpdatedBy: &models.User{Email: "updater@example.com"},
 		PreviewTeams:  []models.PreviewTeam{{ID: "team1"}, {ID: "team2"}},
-		ScheduledAt:   &oneDayLater,
+		ScheduledAt:   &oneMinuteLater,
 		State:         models.BundleStateApproved,
 		Title:         "Scheduled Bundle 1",
 		UpdatedAt:     &now,

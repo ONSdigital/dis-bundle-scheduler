@@ -60,8 +60,10 @@ func CreatePublisher(cfg *config.Configuration, clientList ClientList) (BundlePu
 func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	// The time to check for scheduled publication, this is rounded to the nearest minute as publication on the minute
 	// is what is provided to users to enter.  Validation is carried out below to ensure publications are not made early
-	now := time.Now().UTC().Round(time.Minute)
-	logData := log.Data{"publish_date": now}
+	now := time.Now().UTC()
+	// get difference between now and next minute
+	nextMinute := now.Add(time.Minute * 1)
+	logData := log.Data{"publish_date": nextMinute}
 
 	cfg, err := config.Get()
 	if err != nil {
@@ -75,7 +77,7 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 
 	log.Info(ctx, "Retrieving bundles scheduled for release", logData)
 
-	getScheduledBundlesResult, err := p.bundlesClient.BundleClient.GetBundles(ctx, headers, &now, nil)
+	getScheduledBundlesResult, err := p.bundlesClient.BundleClient.GetBundles(ctx, headers, &nextMinute, nil)
 
 	if getScheduledBundlesResult.Count == 0 && strings.Contains(fmt.Sprint(err), "404") {
 		log.Info(ctx, "No bundles ready for publication", logData)
@@ -102,23 +104,26 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 				// Do not fail and return if there is an issue as the process needs to continue
 				log.Error(ctx, "Error unmarshalling bundle info, moving to next item", err, logData)
 			} else {
-				publishCheck := time.Now().UTC()
-				// Check to ensure bundles are not published early
-				if bundleObj.ScheduledAt.Before(publishCheck) || bundleObj.ScheduledAt.Equal(publishCheck) {
-					// Ensure the bundle is in the approved state
-					if bundleObj.State == "APPROVED" {
-						var publishedBundle PublishBundleResult
-						headers.IfMatch = bundle.Headers.Get("Etag")
-						updatedBundle, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, getScheduledBundlesResult.Items[i].ID, models.BundleStatePublished)
-						if err != nil {
-							// Do not fail and return if there is an issue as the process needs to continue
-							log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
-							publishedBundle = PublishBundleResult{BundleID: getScheduledBundlesResult.Items[i].ID, Success: false, Error: nil}
-						} else {
-							publishedBundle = PublishBundleResult{BundleID: updatedBundle.ID, Success: true, Error: nil}
-						}
-						publicationList.Results = append(publicationList.Results, publishedBundle)
+				// Get the time difference between the minute submitted in the query and the current time
+				publishCheck := nextMinute.Sub(time.Now().UTC())
+
+				// Check to ensure bundles are not published early - sleeps the process for the amount of time between current time
+				// above and publication time
+				time.Sleep(publishCheck)
+
+				// Ensure the bundle is in the approved state
+				if bundleObj.State == "APPROVED" {
+					var publishedBundle PublishBundleResult
+					headers.IfMatch = bundle.Headers.Get("Etag")
+					updatedBundle, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, getScheduledBundlesResult.Items[i].ID, models.BundleStatePublished)
+					if err != nil {
+						// Do not fail and return if there is an issue as the process needs to continue
+						log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
+						publishedBundle = PublishBundleResult{BundleID: getScheduledBundlesResult.Items[i].ID, Success: false, Error: nil}
+					} else {
+						publishedBundle = PublishBundleResult{BundleID: updatedBundle.ID, Success: true, Error: nil}
 					}
+					publicationList.Results = append(publicationList.Results, publishedBundle)
 				}
 			}
 		}
