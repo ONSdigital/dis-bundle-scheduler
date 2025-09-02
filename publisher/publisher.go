@@ -91,6 +91,13 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 
 	var publicationList PublishResult
 
+	// Get the time difference between the minute submitted in the query and the current time
+	publishCheck := nextMinute.Sub(time.Now().UTC())
+
+	// Check to ensure bundles are not published early - sleeps the process for the amount of time between current time
+	// above and publication time
+	time.Sleep(publishCheck)
+
 	for i := range getScheduledBundlesResult.Items {
 		// GetBundles does not return the etags for the bundles as it is returned in the header value, so a GetBundle request is required
 		bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, getScheduledBundlesResult.Items[i].ID)
@@ -104,13 +111,6 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 				// Do not fail and return if there is an issue as the process needs to continue
 				log.Error(ctx, "Error unmarshalling bundle info, moving to next item", err, logData)
 			} else {
-				// Get the time difference between the minute submitted in the query and the current time
-				publishCheck := nextMinute.Sub(time.Now().UTC())
-
-				// Check to ensure bundles are not published early - sleeps the process for the amount of time between current time
-				// above and publication time
-				time.Sleep(publishCheck)
-
 				// Ensure the bundle is in the approved state
 				if bundleObj.State == "APPROVED" {
 					var publishedBundle PublishBundleResult
