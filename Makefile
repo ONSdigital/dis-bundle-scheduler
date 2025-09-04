@@ -15,7 +15,7 @@ audit:
 
 .PHONY: lint
 lint:
-	golangci-lint run --timeout=5m ./...
+	golangci-lint run
 
 .PHONY: build
 build:
