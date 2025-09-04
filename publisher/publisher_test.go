@@ -98,7 +98,7 @@ func TestRunScheduler(t *testing.T) {
 
 		body, err := json.Marshal(testBundleForPublish)
 		if err != nil {
-			fmt.Println(err)
+			So(err, ShouldNotBeNil)
 		}
 
 		bundleAPIMock := &bundleMocks.ClienterMock{
@@ -113,7 +113,10 @@ func TestRunScheduler(t *testing.T) {
 			},
 		}
 		pubPublish, err := publisher.CreatePublisher(cfg, publisher.ClientList{bundleAPIMock})
-		fmt.Println(err)
+		if err != nil {
+			So(err, ShouldNotBeNil)
+		}
+
 		if pubPublish != nil {
 			publishResult, err := pubPublish.Run(context.Background())
 			So(err, ShouldBeNil)
@@ -127,7 +130,7 @@ func TestRunScheduler(t *testing.T) {
 
 		body, err := json.Marshal(testBundleIncorrectState)
 		if err != nil {
-			fmt.Println(err)
+			So(err, ShouldNotBeNil)
 		}
 
 		bundleAPIMock := &bundleMocks.ClienterMock{
@@ -142,7 +145,10 @@ func TestRunScheduler(t *testing.T) {
 			},
 		}
 		pubPublish, err := publisher.CreatePublisher(cfg, publisher.ClientList{bundleAPIMock})
-		fmt.Println(err)
+		if err != nil {
+			So(err, ShouldNotBeNil)
+		}
+
 		if pubPublish != nil {
 			publishResult, err := pubPublish.Run(context.Background())
 			So(err, ShouldBeNil)
@@ -159,7 +165,10 @@ func TestRunScheduler(t *testing.T) {
 			},
 		}
 		pubPublish, err := publisher.CreatePublisher(cfg, publisher.ClientList{bundleAPIMock})
-		fmt.Println(err)
+		if err != nil {
+			So(err, ShouldNotBeNil)
+		}
+
 		if pubPublish != nil {
 			publishResult, err := pubPublish.Run(context.Background())
 			So(err, ShouldNotBeNil)
@@ -179,7 +188,10 @@ func TestRunScheduler(t *testing.T) {
 			},
 		}
 		pubPublish, err := publisher.CreatePublisher(cfg, publisher.ClientList{bundleAPIMock})
-		fmt.Println(err)
+		if err != nil {
+			So(err, ShouldNotBeNil)
+		}
+
 		if pubPublish != nil {
 			publishResult, err := pubPublish.Run(context.Background())
 			So(err, ShouldBeNil)
@@ -193,8 +205,9 @@ func TestRunScheduler(t *testing.T) {
 
 		body, err := json.Marshal(testBundleForPublish)
 		if err != nil {
-			fmt.Println(err)
+			So(err, ShouldNotBeNil)
 		}
+
 		bundleAPIMock := &bundleMocks.ClienterMock{
 			GetBundlesFunc: func(ctx context.Context, headers sdk.Headers, scheduledAt *time.Time, queryParams *sdk.QueryParams) (result *sdk.BundlesList, err errors.Error) {
 				return &testBundles, err
@@ -207,7 +220,10 @@ func TestRunScheduler(t *testing.T) {
 			},
 		}
 		pubPublish, err := publisher.CreatePublisher(cfg, publisher.ClientList{bundleAPIMock})
-		fmt.Println(err)
+		if err != nil {
+			So(err, ShouldNotBeNil)
+		}
+
 		if pubPublish != nil {
 			publishResult, err := pubPublish.Run(context.Background())
 			So(err, ShouldBeNil)

@@ -6,7 +6,7 @@ job "dis-bundle-scheduler" {
   periodic {
     cron             = "* * * * *"
     time_zone        = "UTC"
-    prohibit_overlap = true
+    prohibit_overlap = false
   }
 
   group "publishing" {

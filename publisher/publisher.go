@@ -22,7 +22,6 @@ type PublishBundleResult struct {
 }
 
 type PublishResult struct {
-	// need to make an object for here
 	Results []PublishBundleResult
 	Success bool
 }
@@ -61,8 +60,8 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	// The time to check for scheduled publication, this is rounded to the nearest minute as publication on the minute
 	// is what is provided to users to enter.  Validation is carried out below to ensure publications are not made early
 	now := time.Now().UTC()
-	// get difference between now and next minute
-	nextMinute := now.Add(time.Minute * 1)
+	// get difference between now and next minute - to the whole minute to improve accuracy
+	nextMinute := now.Truncate(time.Minute).Add(time.Minute)
 	logData := log.Data{"publish_date": nextMinute}
 
 	cfg, err := config.Get()
@@ -91,8 +90,8 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 
 	var publicationList PublishResult
 
-	// Get the time difference between the minute submitted in the query and the current time
-	publishCheck := nextMinute.Sub(time.Now().UTC())
+	// Get the time difference between the minute submitted in the query and the current time as specified above
+	publishCheck := nextMinute.Sub(now)
 
 	// Check to ensure bundles are not published early - sleeps the process for the amount of time between current time
 	// above and publication time

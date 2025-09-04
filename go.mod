@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-bundle-scheduler
 
-go 1.24.4
+go 1.24
 
 require (
 	github.com/ONSdigital/dis-bundle-api v1.7.0
@@ -9,6 +9,8 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.8.1
 )
+
+require github.com/stretchr/testify v1.11.1 // indirect
 
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.269.0 // indirect
@@ -20,7 +22,6 @@ require (
 	github.com/go-logr/logr v1.4.3 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
 	github.com/gofrs/uuid v4.4.0+incompatible // indirect
-	github.com/golang/mock v1.6.0
 	github.com/gopherjs/gopherjs v1.17.2 // indirect
 	github.com/hokaccha/go-prettyjson v0.0.0-20211117102719-0474bc63780f // indirect
 	github.com/jtolds/gls v4.20.0+incompatible // indirect

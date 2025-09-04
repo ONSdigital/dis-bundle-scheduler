@@ -6,7 +6,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-// Config represents service configuration for dis-data-bundle-scheduler
+// Config represents service configuration for dis-bundle-scheduler
 type Configuration struct {
 	ServiceToken  string `envconfig:"BUNDLES_API_SERVICE_TOKEN"  json:"-"`
 	BundlesAPIUrl string `envconfig:"BUNDLES_API_URL"`
