@@ -10,8 +10,6 @@ require (
 	github.com/smartystreets/goconvey v1.8.1
 )
 
-require github.com/stretchr/testify v1.11.1 // indirect
-
 require (
 	github.com/ONSdigital/dp-api-clients-go/v2 v2.269.0 // indirect
 	github.com/ONSdigital/dp-dataset-api v1.83.0 // indirect
@@ -30,6 +28,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/satori/go.uuid v1.2.1-0.20181028125025-b2ce2384e17b // indirect
 	github.com/smarty/assertions v1.16.0 // indirect
+	github.com/stretchr/testify v1.11.1 // indirect
 	go.mongodb.org/mongo-driver v1.17.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/otel v1.37.0 // indirect
