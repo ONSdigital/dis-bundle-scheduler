@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"runtime"
 	"strconv"
 	"strings"
 	"time"
@@ -55,6 +56,48 @@ func CreatePublisher(cfg *config.Configuration, clientList ClientList) (BundlePu
 	}, nil
 }
 
+func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Headers, bundleId string, logData log.Data, ch chan PublishResult) {
+	// GetBundles does not return the etags for the bundles as it is returned in the header value, so a GetBundle request is required
+	fmt.Println("IN THE BUNDLE PUBLICATION PROCESS")
+	var publicationList PublishResult
+	bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, bundleId)
+	if err != nil {
+		fmt.Println("THERE WAS AN ERROR")
+		fmt.Println(err)
+		// Do not fail and return if there is an issue as the process needs to continue
+		log.Error(ctx, "Error getting bundle info, moving to next item", err, logData)
+	} else {
+		fmt.Println("FOUND THE BUNDLE")
+		var bundleObj models.Bundle
+		err := json.Unmarshal(bundle.Body, &bundleObj)
+		if err != nil {
+			// Do not fail and return if there is an issue as the process needs to continue
+			log.Error(ctx, "Error unmarshalling bundle info, moving to next item", err, logData)
+		} else if bundleObj.State == "APPROVED" {
+			// Ensure the bundle is in the approved state
+			var publishedBundle PublishBundleResult
+			headers.IfMatch = bundle.Headers.Get("Etag")
+			updatedBundle, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, bundleId, models.BundleStatePublished)
+			if err != nil {
+				// Do not fail and return if there is an issue as the process needs to continue
+				log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
+				publishedBundle = PublishBundleResult{BundleID: bundleId, Success: false, Error: nil}
+			} else {
+				publishedBundle = PublishBundleResult{BundleID: updatedBundle.ID, Success: true, Error: nil}
+			}
+			fmt.Println(publishedBundle)
+			// defer resp.Body.Close()
+
+			publicationList.Results = append(publicationList.Results, publishedBundle)
+		}
+	}
+	ch <- PublishResult{publicationList.Results, true}
+
+	// Close the channel (optional since program ends here)
+
+	fmt.Println("JUST EXITING")
+}
+
 // Run is the main logic of the app. It gets bundles scheduled for release and then attempts to publish them one by one.
 func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	// The time to check for scheduled publication, this is rounded to the nearest minute as publication on the minute
@@ -96,35 +139,55 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	// Check to ensure bundles are not published early - sleeps the process for the amount of time between current time
 	// above and publication time
 	time.Sleep(publishCheck)
+	fmt.Println("Before starting goroutines:", runtime.NumGoroutine())
+
+	// cores := runtime.NumCPU()
+	// runtime.GOMAXPROCS(cores)
+	ch := make(chan PublishResult)
 
 	for i := range getScheduledBundlesResult.Items {
+		go p.runPublicationProcess(ctx, headers, getScheduledBundlesResult.Items[i].ID, logData, ch)
 		// GetBundles does not return the etags for the bundles as it is returned in the header value, so a GetBundle request is required
-		bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, getScheduledBundlesResult.Items[i].ID)
-		if err != nil {
-			// Do not fail and return if there is an issue as the process needs to continue
-			log.Error(ctx, "Error getting bundle info, moving to next item", err, logData)
-		} else {
-			var bundleObj models.Bundle
-			err := json.Unmarshal(bundle.Body, &bundleObj)
-			if err != nil {
-				// Do not fail and return if there is an issue as the process needs to continue
-				log.Error(ctx, "Error unmarshalling bundle info, moving to next item", err, logData)
-			} else if bundleObj.State == "APPROVED" {
-				// Ensure the bundle is in the approved state
-				var publishedBundle PublishBundleResult
-				headers.IfMatch = bundle.Headers.Get("Etag")
-				updatedBundle, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, getScheduledBundlesResult.Items[i].ID, models.BundleStatePublished)
-				if err != nil {
-					// Do not fail and return if there is an issue as the process needs to continue
-					log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
-					publishedBundle = PublishBundleResult{BundleID: getScheduledBundlesResult.Items[i].ID, Success: false, Error: nil}
-				} else {
-					publishedBundle = PublishBundleResult{BundleID: updatedBundle.ID, Success: true, Error: nil}
-				}
-				publicationList.Results = append(publicationList.Results, publishedBundle)
-			}
-		}
+		// bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, getScheduledBundlesResult.Items[i].ID)
+		// if err != nil {
+		// 	// Do not fail and return if there is an issue as the process needs to continue
+		// 	log.Error(ctx, "Error getting bundle info, moving to next item", err, logData)
+		// } else {
+		// 	var bundleObj models.Bundle
+		// 	err := json.Unmarshal(bundle.Body, &bundleObj)
+		// 	if err != nil {
+		// 		// Do not fail and return if there is an issue as the process needs to continue
+		// 		log.Error(ctx, "Error unmarshalling bundle info, moving to next item", err, logData)
+		// 	} else if bundleObj.State == "APPROVED" {
+		// 		// Ensure the bundle is in the approved state
+		// 		var publishedBundle PublishBundleResult
+		// 		headers.IfMatch = bundle.Headers.Get("Etag")
+		// 		updatedBundle, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, getScheduledBundlesResult.Items[i].ID, models.BundleStatePublished)
+		// 		if err != nil {
+		// 			// Do not fail and return if there is an issue as the process needs to continue
+		// 			log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
+		// 			publishedBundle = PublishBundleResult{BundleID: getScheduledBundlesResult.Items[i].ID, Success: false, Error: nil}
+		// 		} else {
+		// 			publishedBundle = PublishBundleResult{BundleID: updatedBundle.ID, Success: true, Error: nil}
+		// 		}
+		// 		publicationList.Results = append(publicationList.Results, publishedBundle)
+		// 	}
+		// }
 	}
+	//close(ch)
+	<-ch
+	// Collect responses
+	for i := 0; i < len(getScheduledBundlesResult.Items); i++ {
+		resp := <-ch
+		if resp.Results != nil {
+			fmt.Printf("%s", fmt.Sprint(resp))
+		}
+		// } else {
+		//     fmt.Printf("Successfully fetched %s: %s\n", resp.url, resp.status)
+		// }
+	}
+
+	fmt.Println("After goroutines launched:", runtime.NumGoroutine())
 	return &PublishResult{
 		Success: true,
 		Results: publicationList.Results,

@@ -5,6 +5,7 @@ go 1.24
 require (
 	github.com/ONSdigital/dis-bundle-api v1.7.0
 	github.com/ONSdigital/log.go/v2 v2.4.6
+	github.com/gorilla/mux v1.8.1
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/pkg/errors v0.9.1
 	github.com/smartystreets/goconvey v1.8.1
