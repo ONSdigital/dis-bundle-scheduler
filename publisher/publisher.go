@@ -7,6 +7,7 @@ import (
 	"runtime"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ONSdigital/dis-bundle-api/models"
@@ -56,9 +57,10 @@ func CreatePublisher(cfg *config.Configuration, clientList ClientList) (BundlePu
 	}, nil
 }
 
-func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Headers, bundleId string, logData log.Data, ch chan PublishResult) {
+func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Headers, bundleId string, logData log.Data, ch chan PublishResult, wg *sync.WaitGroup) {
 	// GetBundles does not return the etags for the bundles as it is returned in the header value, so a GetBundle request is required
 	fmt.Println("IN THE BUNDLE PUBLICATION PROCESS")
+	defer wg.Done()
 	var publicationList PublishResult
 	bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, bundleId)
 	if err != nil {
@@ -140,13 +142,21 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	// above and publication time
 	time.Sleep(publishCheck)
 	fmt.Println("Before starting goroutines:", runtime.NumGoroutine())
+	fmt.Println("Starting go routines at: ", time.Now().String())
 
 	// cores := runtime.NumCPU()
 	// runtime.GOMAXPROCS(cores)
+	var wg sync.WaitGroup
+	// numWorkers := len(getScheduledBundlesResult.Items)
+	// wg.Add(numWorkers)
 	ch := make(chan PublishResult)
 
 	for i := range getScheduledBundlesResult.Items {
-		go p.runPublicationProcess(ctx, headers, getScheduledBundlesResult.Items[i].ID, logData, ch)
+		bundleId := getScheduledBundlesResult.Items[i].ID
+		wg.Add(1)
+		fmt.Println("Starting loop: "+strconv.Itoa(i)+"at: ", time.Now().String())
+		go p.runPublicationProcess(ctx, headers, bundleId, logData, ch, &wg)
+		fmt.Println("Ending loop: "+strconv.Itoa(i)+"at: ", time.Now().String())
 		// GetBundles does not return the etags for the bundles as it is returned in the header value, so a GetBundle request is required
 		// bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, getScheduledBundlesResult.Items[i].ID)
 		// if err != nil {
@@ -176,16 +186,17 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	}
 	//close(ch)
 	<-ch
+	wg.Wait()
 	// Collect responses
-	for i := 0; i < len(getScheduledBundlesResult.Items); i++ {
-		resp := <-ch
-		if resp.Results != nil {
-			fmt.Printf("%s", fmt.Sprint(resp))
-		}
-		// } else {
-		//     fmt.Printf("Successfully fetched %s: %s\n", resp.url, resp.status)
-		// }
-	}
+	// for i := 0; i < len(getScheduledBundlesResult.Items); i++ {
+	// 	resp := <-ch
+	// 	if resp.Results != nil {
+	// 		fmt.Printf("%s", fmt.Sprint(resp))
+	// 	}
+	// 	// } else {
+	// 	//     fmt.Printf("Successfully fetched %s: %s\n", resp.url, resp.status)
+	// 	// }
+	// }
 
 	fmt.Println("After goroutines launched:", runtime.NumGoroutine())
 	return &PublishResult{
