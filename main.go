@@ -2,10 +2,12 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/pprof"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/ONSdigital/dis-bundle-api/sdk"
@@ -87,6 +89,7 @@ func run(ctx context.Context) error {
 		resultChan <- result
 	}()
 
+	fmt.Println("NUMBER OF GO ROUTINES ON STARTUP", runtime.NumGoroutine())
 	// blocks until completion, an os interrupt or a fatal error occurs
 	select {
 	case err := <-errChan:
