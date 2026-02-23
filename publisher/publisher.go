@@ -60,10 +60,8 @@ func CreatePublisher(cfg *config.Configuration, clientList ClientList) (BundlePu
 func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Headers, bundleId string, logData log.Data, ch chan string, wg *sync.WaitGroup) {
 	// GetBundles does not return the etags for the bundles as it is returned in the header value, so a GetBundle request is required
 	fmt.Println("IN THE BUNDLE PUBLICATION PROCESS")
-	defer func() {
-		fmt.Println("Calling done for ", bundleId)
-		wg.Done()
-	}()
+	defer wg.Done()
+
 	//var publicationList PublishResult
 	fmt.Println("before getbundle", bundleId)
 	bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, bundleId)
