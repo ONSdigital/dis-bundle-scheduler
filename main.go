@@ -2,19 +2,14 @@ package main
 
 import (
 	"context"
-	"fmt"
-	"net/http"
-	"net/http/pprof"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
 
 	"github.com/ONSdigital/dis-bundle-api/sdk"
 	"github.com/ONSdigital/dis-bundle-scheduler/config"
 	"github.com/ONSdigital/dis-bundle-scheduler/publisher"
 	"github.com/ONSdigital/log.go/v2/log"
-	"github.com/gorilla/mux"
 	"github.com/pkg/errors"
 )
 
@@ -31,24 +26,6 @@ var (
 
 func main() {
 
-	// Add the following
-	go func() {
-		http.ListenAndServe(":6060", nil)
-
-		// Create a new router
-		router := mux.NewRouter()
-
-		// Register pprof handlers
-		router.HandleFunc("/debug/pprof/", pprof.Index)
-		router.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-		router.HandleFunc("/debug/pprof/profile", pprof.Profile)
-		router.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-
-		router.Handle("/debug/pprof/goroutine", pprof.Handler("goroutine"))
-		router.Handle("/debug/pprof/heap", pprof.Handler("heap"))
-		router.Handle("/debug/pprof/threadcreate", pprof.Handler("threadcreate"))
-		router.Handle("/debug/pprof/block", pprof.Handler("block"))
-	}()
 	log.Namespace = serviceName
 	ctx := context.Background()
 
@@ -89,7 +66,6 @@ func run(ctx context.Context) error {
 		resultChan <- result
 	}()
 
-	fmt.Println("NUMBER OF GO ROUTINES ON STARTUP", runtime.NumGoroutine())
 	// blocks until completion, an os interrupt or a fatal error occurs
 	select {
 	case err := <-errChan:
@@ -105,8 +81,7 @@ func run(ctx context.Context) error {
 				return err
 			}
 		}
-		//time.Sleep(8 * time.Minute)
 		log.Info(ctx, "publish scheduled bundles complete")
 	}
-	return nil // TODO close down the checker and confirm task completion state (err or nil)
+	return nil
 }
