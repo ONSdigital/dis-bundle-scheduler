@@ -57,35 +57,31 @@ func CreatePublisher(cfg *config.Configuration, clientList ClientList) (BundlePu
 	}, nil
 }
 
-func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Headers, bundleId string, logData log.Data, ch chan string, wg *sync.WaitGroup) {
+func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Headers, bundleId string, ch chan string, wg *sync.WaitGroup) {
 	defer wg.Done()
 
+	logData := log.Data{"bundle_id": bundleId}
 	/// GetBundles does not return the etags for the bundles as it is returned in the header value, so a GetBundle request is required
 	bundle, err := p.bundlesClient.BundleClient.GetBundle(ctx, headers, bundleId)
 	if err != nil {
-		// Do not fail and return if there is an issue as the process needs to continue
 		log.Error(ctx, "Error getting bundle info, moving to next item", err, logData)
 		return
 	} else {
 		var bundleObj models.Bundle
 		err := json.Unmarshal(bundle.Body, &bundleObj)
 		if err != nil {
-			// Do not fail and return if there is an issue as the process needs to continue
 			log.Error(ctx, "Error unmarshalling bundle info, moving to next item", err, logData)
 			return
 		} else if bundleObj.State == models.BundleStateApproved {
 			// Ensure the bundle is in the approved state
-			var publishedBundle PublishBundleResult
-
 			headers.IfMatch = bundle.Headers.Get("Etag")
 			_, err := p.bundlesClient.BundleClient.PutBundleState(ctx, headers, bundleId, models.BundleStatePublished)
 			if err != nil {
-				// Do not fail and return if there is an issue as the process needs to continue
 				log.Error(ctx, "Error publishing bundle, moving to next item", err, logData)
-				publishedBundle = PublishBundleResult{BundleID: bundleId, Success: false, Error: err}
+				return
 			}
 
-			publishedBundle.BundleID = bundleId
+			log.Info(ctx, "Successfully processed bundle:", logData)
 			ch <- bundleId
 		}
 	}
@@ -93,7 +89,6 @@ func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Heade
 
 // Run is the main logic of the app. It gets bundles scheduled for release and then attempts to publish them one by one.
 func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
-
 	// The time to check for scheduled publication, this is rounded to the nearest minute as publication on the minute
 	// is what is provided to users to enter.  Validation is carried out below to ensure publications are not made early
 	now := time.Now().UTC()
@@ -131,8 +126,6 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	logData = log.Data{"bundle_ids": bundles}
 	log.Info(ctx, "Bundle list to publish", logData)
 
-	var publicationList PublishResult
-
 	// Get the time difference between the minute submitted in the query and the current time as specified above
 	publishCheck := nextMinute.Sub(now)
 
@@ -146,14 +139,11 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	for i := range getScheduledBundlesResult.Items {
 		bundleId := getScheduledBundlesResult.Items[i].ID
 		wg.Add(1)
-		go p.runPublicationProcess(ctx, headers, bundleId, logData, ch, &wg)
-		publishResult := PublishBundleResult{BundleID: bundleId, Success: true}
-		publicationList.Results = append(publicationList.Results, publishResult)
+		go p.runPublicationProcess(ctx, headers, bundleId, ch, &wg)
 	}
 	wg.Wait()
 
 	return &PublishResult{
 		Success: true,
-		Results: publicationList.Results,
 	}, nil
 }

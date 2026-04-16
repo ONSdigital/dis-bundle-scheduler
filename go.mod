@@ -1,6 +1,6 @@
 module github.com/ONSdigital/dis-bundle-scheduler
 
-go 1.24
+go 1.26.0
 
 require (
 	github.com/ONSdigital/dis-bundle-api v1.7.0

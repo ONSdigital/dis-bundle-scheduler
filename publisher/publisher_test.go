@@ -116,7 +116,7 @@ func TestRunScheduler(t *testing.T) {
 		if pubPublish != nil {
 			publishResult, err := pubPublish.Run(context.Background())
 			So(err, ShouldBeNil)
-			So(len(publishResult.Results), ShouldEqual, 1)
+			So(publishResult.Success, ShouldBeTrue)
 		}
 	})
 
@@ -142,9 +142,8 @@ func TestRunScheduler(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		if pubPublish != nil {
-			publishResult, err := pubPublish.Run(context.Background())
+			_, err := pubPublish.Run(context.Background())
 			So(err, ShouldBeNil)
-			So(len(publishResult.Results), ShouldEqual, 0)
 		}
 	})
 
@@ -160,9 +159,8 @@ func TestRunScheduler(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		if pubPublish != nil {
-			publishResult, err := pubPublish.Run(context.Background())
+			_, err := pubPublish.Run(context.Background())
 			So(err, ShouldNotBeNil)
-			So(len(publishResult.Results), ShouldEqual, 0)
 		}
 	})
 
@@ -181,9 +179,8 @@ func TestRunScheduler(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		if pubPublish != nil {
-			publishResult, err := pubPublish.Run(context.Background())
+			_, err := pubPublish.Run(context.Background())
 			So(err, ShouldBeNil)
-			So(len(publishResult.Results), ShouldEqual, 0)
 		}
 	})
 
@@ -209,10 +206,9 @@ func TestRunScheduler(t *testing.T) {
 		So(err, ShouldBeNil)
 
 		if pubPublish != nil {
-			publishResult, err := pubPublish.Run(context.Background())
+			_, err := pubPublish.Run(context.Background())
+			// Error is nil because the scheduler moves on to the next bundle if there is an issue with publication
 			So(err, ShouldBeNil)
-			So(len(publishResult.Results), ShouldEqual, 1)
-			So(publishResult.Results[0].Success, ShouldBeFalse)
 		}
 	})
 }

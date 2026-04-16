@@ -1,4 +1,4 @@
-FROM golang:tip-alpine3.22 as build
+FROM golang:tip-alpine3.23 as build
 
 ENV GOCACHE=/go/.go/cache GOPATH=/go/.go/path TZ=Europe/London
 RUN GOBIN=/bin go install github.com/cespare/reflex@latest
