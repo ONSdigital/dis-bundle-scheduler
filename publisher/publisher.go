@@ -89,7 +89,6 @@ func (p *Publisher) runPublicationProcess(ctx context.Context, headers sdk.Heade
 
 // Run is the main logic of the app. It gets bundles scheduled for release and then attempts to publish them one by one.
 func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
-
 	// The time to check for scheduled publication, this is rounded to the nearest minute as publication on the minute
 	// is what is provided to users to enter.  Validation is carried out below to ensure publications are not made early
 	now := time.Now().UTC()
@@ -119,7 +118,7 @@ func (p *Publisher) Run(ctx context.Context) (*PublishResult, error) {
 	}
 
 	log.Info(ctx, "There are "+strconv.Itoa(getScheduledBundlesResult.Count)+" bundles to publish", logData)
-	var bundles []string
+	bundles := make([]string, 0, len(getScheduledBundlesResult.Items))
 	for r := range getScheduledBundlesResult.Items {
 		bundles = append(bundles, getScheduledBundlesResult.Items[r].ID)
 	}
