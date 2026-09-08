@@ -16,16 +16,23 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
+const (
+	creatorEmail = "creator@example.com"
+	updaterEmail = "updater@example.com"
+	team1        = "team1"
+	team2        = "team2"
+)
+
 var (
 	now            = time.Now().UTC()
 	oneMinuteLater = now.Add(1 * time.Minute)
 	testBundle     = models.Bundle{
 		ID:            "bundle1",
 		BundleType:    models.BundleTypeScheduled,
-		CreatedBy:     &models.User{Email: "creator@example.com"},
+		CreatedBy:     &models.User{Email: creatorEmail},
 		CreatedAt:     &now,
-		LastUpdatedBy: &models.User{Email: "updater@example.com"},
-		PreviewTeams:  &[]models.PreviewTeam{{ID: "team1"}, {ID: "team2"}},
+		LastUpdatedBy: &models.User{Email: updaterEmail},
+		PreviewTeams:  &[]models.PreviewTeam{{ID: team1}, {ID: team2}},
 		ScheduledAt:   &oneMinuteLater,
 		State:         models.BundleStateApproved,
 		Title:         "Scheduled Bundle 1",
@@ -36,10 +43,10 @@ var (
 	testBundleIncorrectState = models.Bundle{
 		ID:            "bundle5",
 		BundleType:    models.BundleTypeScheduled,
-		CreatedBy:     &models.User{Email: "creator@example.com"},
+		CreatedBy:     &models.User{Email: creatorEmail},
 		CreatedAt:     &now,
-		LastUpdatedBy: &models.User{Email: "updater@example.com"},
-		PreviewTeams:  &[]models.PreviewTeam{{ID: "team1"}, {ID: "team2"}},
+		LastUpdatedBy: &models.User{Email: updaterEmail},
+		PreviewTeams:  &[]models.PreviewTeam{{ID: team1}, {ID: team2}},
 		ScheduledAt:   &now,
 		State:         models.BundleStateDraft,
 		Title:         "Scheduled Bundle 5",
@@ -50,10 +57,10 @@ var (
 	testBundleForPublish = models.Bundle{
 		ID:            "bundle2",
 		BundleType:    models.BundleTypeScheduled,
-		CreatedBy:     &models.User{Email: "creator@example.com"},
+		CreatedBy:     &models.User{Email: creatorEmail},
 		CreatedAt:     &now,
-		LastUpdatedBy: &models.User{Email: "updater@example.com"},
-		PreviewTeams:  &[]models.PreviewTeam{{ID: "team1"}, {ID: "team2"}},
+		LastUpdatedBy: &models.User{Email: updaterEmail},
+		PreviewTeams:  &[]models.PreviewTeam{{ID: team1}, {ID: team2}},
 		ScheduledAt:   &now,
 		State:         models.BundleStateApproved,
 		Title:         "Scheduled Bundle 2",
